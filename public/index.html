@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Todo App</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+}
+
+.container{
+    width:420px;
+    padding:30px;
+    border-radius:20px;
+    backdrop-filter: blur(20px);
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    color:white;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:25px;
+    letter-spacing:1px;
+}
+
+.input-group{
+    display:flex;
+    gap:10px;
+}
+
+input{
+    flex:1;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    outline:none;
+    font-size:16px;
+}
+
+button{
+    padding:12px 18px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+    background:#00ffd5;
+    transition:.2s;
+}
+
+button:hover{
+    transform:scale(1.05);
+}
+
+ul{
+    list-style:none;
+    margin-top:20px;
+}
+
+li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background: rgba(255,255,255,0.12);
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:10px;
+    transition:.2s;
+}
+
+li:hover{
+    background: rgba(255,255,255,0.2);
+}
+
+.completed{
+    text-decoration: line-through;
+    opacity:.6;
+}
+
+.delete{
+    background:#ff4757;
+    color:white;
+}
+
+.delete:hover{
+    background:#ff2e43;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <h1>⚡ Todo App</h1>
+
+    <div class="input-group">
+        <input id="taskInput" placeholder="Enter a task..."/>
+        <button onclick="addTask()">Add</button>
+    </div>
+
+    <ul id="taskList"></ul>
+
+</div>
+
+<script>
+
+const API = "http://localhost:5000/tasks";
+
+async function loadTasks(){
+
+    const res = await fetch(API);
+    const tasks = await res.json();
+
+    const list = document.getElementById("taskList");
+    list.innerHTML = "";
+
+    tasks.forEach(task => {
+
+        const li = document.createElement("li");
+
+        if(task.completed){
+            li.classList.add("completed");
+        }
+
+        li.innerHTML = `
+            <span onclick="toggleTask(${task.id})" style="cursor:pointer">
+                ${task.title}
+            </span>
+
+            <button class="delete" onclick="deleteTask(${task.id})">
+                X
+            </button>
+        `;
+
+        list.appendChild(li);
+    });
+}
+
+
+
+async function addTask(){
+
+    const input = document.getElementById("taskInput");
+
+    if(!input.value) return;
+
+    await fetch(API,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+            title: input.value
+        })
+    });
+
+    input.value="";
+
+    loadTasks();
+}
+
+
+
+async function deleteTask(id){
+
+    await fetch(`${API}/${id}`,{
+        method:"DELETE"
+    });
+
+    loadTasks();
+}
+
+
+
+async function toggleTask(id){
+
+    const res = await fetch(`${API}/${id}`);
+    const task = await res.json();
+
+    await fetch(`${API}/${id}`,{
+        method:"PUT",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+            completed: !task.completed
+        })
+    });
+
+    loadTasks();
+}
+
+
+
+loadTasks();
+
+</script>
+
+</body>
+</html>
